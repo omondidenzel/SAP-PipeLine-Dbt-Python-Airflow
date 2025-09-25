@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: sap_source
+    database: dbt_db
+    schema: dbt_schema
+    tables:
+      - name: financial_transactions
+        description: "This table contains raw data from the SAP system."
+        columns:
+          - name: transaction_id
+            description: "Unique identifier for each transaction."
+            tests:
+              - not_null
+              - unique
+          

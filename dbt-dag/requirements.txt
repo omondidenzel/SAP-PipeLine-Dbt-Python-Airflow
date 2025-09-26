@@ -3,6 +3,7 @@ virtualenv
 apache-airflow-providers-postgres
 astronomer-cosmos
 apache-airflow
+dbt-core==1.9.1 
+dbt-postgres==1.9.1 
+protobuf>=5
 
-
-astro-run-dag # This package is needed for the astro run command. It will be removed before a deploy

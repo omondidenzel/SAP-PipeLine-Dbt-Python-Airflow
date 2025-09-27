@@ -6,6 +6,8 @@ from airflow import DAG
 
 from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.providers.standard.operators.bash import BashOperator
+from airflow.providers.standard.operators.python import PythonOperator
+from sap_etl import sapbyd
 
 # log = logging.getLogger(
 #     "airflow.task",
@@ -29,18 +31,24 @@ with DAG(
     catchup=False,
 ) as dag:
     
-    def print_hello():
-        print("Hello World!")
+    def call_sap_etl():
+        sapbyd.main()
 
     start = EmptyOperator(task_id='start')
 
     end = EmptyOperator(task_id='end')
 
-    dbt_run = BashOperator(
-        task_id='dbt_run',
-        bash_command="cd /usr/local/airflow/dags/sap_pipeline && \
-            dbt run"
+    sap_etl = BashOperator(
+        task_id='sap_etl',
+        bash_command="cd /usr/local/airflow/dags/sap_etl && \
+            python sapbyd.py",
     )
+
+    # dbt_run = BashOperator(
+    #     task_id='dbt_run',
+    #     bash_command="cd /usr/local/airflow/dags/sap_pipeline && \
+    #         dbt run"
+    # )
 
     # dbt_test = BashOperator(
     #     task_id='dbt_test',
@@ -48,5 +56,6 @@ with DAG(
 
     # )
 
-    start >> dbt_run >> end
+    start >> sap_etl >> end
+    # >> dbt_run >> end
     # >> dbt_test >> end

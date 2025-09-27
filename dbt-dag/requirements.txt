@@ -6,4 +6,7 @@ apache-airflow
 dbt-core==1.9.1 
 dbt-postgres==1.9.1 
 protobuf>=5
+logging
+requests
+pandas
 

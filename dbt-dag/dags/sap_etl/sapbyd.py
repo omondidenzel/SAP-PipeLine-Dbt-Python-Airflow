@@ -5,8 +5,11 @@ from dotenv import load_dotenv, find_dotenv
 import logging
 import sys
 from datetime import datetime
+
+sys.path.append(os.path.expanduser('/usr/local/airflow/dags/sap_etl'))
+
 from shared_script import convert_sap_byd_date, load_to_postgres
-import mapping
+from mapping import column_mapping
 
 load_dotenv(
     find_dotenv(),
@@ -63,16 +66,26 @@ class SAPByDesign:
             log.warning("DataFrame is empty. No data to transform.")
             return df
         # Drop unwanted columns and rename columns based on mapping 
-        df.drop(columns=[col for col in mapping.column_mapping.values()], inplace=True, errors='ignore')
+        log.info(f"DataFrame shape before transformation: {df.shape}")
+        log.info(f"Initial DataFrame columns: {df.columns.tolist()}")
+        df.drop(
+            columns=[col for col in column_mapping if column_mapping[col] is None], 
+            inplace=True, 
+        )
+        log.info(f"Columns after dropping unwanted columns: {df.columns.tolist()}")
 
         # Rename columns based on mapping
         df.rename(
-            columns= {key: items for key, items in mapping.column_mapping.items() if items is not None}, 
+            columns= {key: items for key, items in column_mapping.items() if items is not None}, 
             inplace=True
         )
+        log.info(f"Columns after renaming: {df.columns.tolist()}")
 
         # transformation: Convert all column names to lowercase
         df.columns = [col.lower() for col in df.columns]
+
+        # log.info(f"Columns after renaming: {df.columns}")
+        log.info(f"DataFrame shape after dropping unwanted columns: {df.shape}")
 
         # Convert SAP ByD date strings to standard date format
         date_columns = ['create_date', 'change_date']
@@ -82,15 +95,25 @@ class SAPByDesign:
         # process product_id to ensure it's a string and strip any whitespace
         df['product_id'] = df['product_id'].astype(str).str.strip()
 
+        df['company_id'] = 'FKConsulting'
+
         # DWH load date 
         df['dwh_load_date'] = datetime.now()
         
         log.info("Data transformation complete.")
 
         # Save transformed data to CSV
-        df.to_csv('CSV/sap_byd_data.csv', index=False)
+        file_path = 'CSV/sap_byd_data.csv'
+        try:
+            if not os.path.exists('CSV'):
+                log.info("Creating CSV directory.")
+                os.makedirs('CSV', exist_ok=True)
+                log.info("CSV directory created.")
+            df.to_csv(f"{file_path}", index=False)
+            log.info(f"Data save in {file_path}")
+        except Exception as e:
+            log.error(f"Error saving data to CSV: {e}")
         
-        log.info("Data saved to testing.csv")
         return df
     
     def to_db(self, df, table_name):
@@ -105,8 +128,14 @@ class SAPByDesign:
             engine.dispose()
             log.info("Database connection closed.")
 
-if __name__ == "__main__":
+def main():
     sap = SAPByDesign(sap_base_url, username, password, top, offset)
     df = sap.fetch_data()
+    file_path = 'CSV/sap_byd_data.csv'
     sap.transform_data(df)
-    sap.to_db(pd.read_csv('CSV/sap_byd_data.csv'), os.getenv("DB_TABLE", "sap_byd_data"))
+    sap.to_db(pd.read_csv(f"{file_path}"), os.getenv("DB_TABLE", "sap_byd_data"))
+
+if __name__ == "__main__":
+    main()
+
+# all should work well now

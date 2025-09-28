@@ -3,9 +3,8 @@ virtualenv
 apache-airflow-providers-postgres
 astronomer-cosmos
 apache-airflow
-dbt-core==1.9.1 
-dbt-postgres==1.9.1 
-protobuf>=5
+dbt-core==1.10.13
+dbt-postgres==1.9.1
 logging
 requests
 pandas

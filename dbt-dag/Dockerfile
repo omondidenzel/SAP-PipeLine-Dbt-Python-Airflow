@@ -1,5 +1,7 @@
 FROM astrocrpublic.azurecr.io/runtime:3.0-12
 
+USER root
+
 RUN mkdir -p /home/astro/.dbt
 
 # Copy your dbt project into Airflow home (so DAGs can access it)
@@ -13,7 +15,10 @@ COPY requirements.txt /app/requirements.txt
 COPY profiles.yml /home/astro/.dbt/profiles.yml
 
 # Install dbt + your Python deps
-RUN pip install --upgrade pip && \
+RUN pip install --upgrade pip && \ 
+    pip uninstall -y dbt-core dbt-postgres || true && \
     pip install -r /app/requirements.txt
+
+USER astro
 
 

@@ -1,21 +1,10 @@
 from datetime import datetime, timedelta
-# import logging
-
-# The DAG object; we'll need this to instantiate a DAG
 from airflow import DAG
 
 from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.providers.standard.operators.bash import BashOperator
 from airflow.providers.standard.operators.python import PythonOperator
 from sap_etl import sapbyd
-
-# log = logging.getLogger(
-#     "airflow.task",
-#     level=logging.INFO,
-#     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-#     datefmt="%Y-%m-%d %H:%M:%S",
-# )
-
 
 default_args = {
     'owner': 'akwanybabu',
@@ -44,11 +33,12 @@ with DAG(
             python sapbyd.py",
     )
 
-    # dbt_run = BashOperator(
-    #     task_id='dbt_run',
-    #     bash_command="cd /usr/local/airflow/dags/sap_pipeline && \
-    #         dbt run"
-    # )
+    dbt_run = BashOperator(
+        task_id='dbt_run',
+        bash_command= "python -m dbt run --project-dir /usr/local/airflow/dags/sap_pipeline"
+        # "cd /usr/local/airflow/dags/sap_pipeline && \
+        #     dbt run"
+    )
 
     # dbt_test = BashOperator(
     #     task_id='dbt_test',
@@ -56,6 +46,4 @@ with DAG(
 
     # )
 
-    start >> sap_etl >> end
-    # >> dbt_run >> end
-    # >> dbt_test >> end
+    start >> sap_etl >> dbt_run >> end

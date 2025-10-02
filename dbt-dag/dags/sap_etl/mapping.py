@@ -22,5 +22,3 @@ column_mapping = {
         "TZ39D5E267B2FF536D": "quantity_unit_code",
         "TZ123340612B295901": "taxation_unit_code",
 }
-
-#
